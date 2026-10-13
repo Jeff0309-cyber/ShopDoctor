@@ -4,7 +4,6 @@
 <dict>
 	<key>NSAppTransportSecurity</key>
 	<dict>
-		<!-- Lets the app reach the dev backend on localhost / your Mac's LAN IP. Remove for release. -->
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
