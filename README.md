@@ -31,6 +31,12 @@ The **Shop experience** card on the Check-up tab opens a separate check:
 
 To test the real scan, run the app on a LiDAR iPhone. Connect it by cable, choose your Apple ID under *Signing & Capabilities*, then set **Shop → Server** to your Mac's LAN IP, e.g. `http://192.168.1.20:8000`.
 
+## Website (public link)
+
+The backend also serves a mobile-first web version of ShopDoctor (`backend/web/`, plain ES modules, no build step). It covers the check-up, the printed prescription, the dashboard, the twins map, Doctor chat, both languages and the photo-based shop check. Rooms scanned with the iPhone app appear as a 2D floor plan. To keep a public link from draining the AI quota, each visitor gets 30 AI requests per hour, with 600 per day for the whole site (`AI_REQUESTS_PER_HOUR` / `AI_REQUESTS_PER_DAY`).
+
+**Deploy on Render (free):** in Render, choose **New → Blueprint**, pick this GitHub repo, and paste your `GEMINI_API_KEY` when asked. `render.yaml` does the rest, and every push to `main` redeploys. The free plan sleeps after about 15 idle minutes (the first visit after that takes about a minute), and saved shops reset on each deploy.
+
 ## Backend
 
 ```bash

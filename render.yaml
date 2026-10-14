@@ -1,0 +1,20 @@
+# Render Blueprint: one free web service that serves both the ShopDoctor website and its API.
+services:
+  - type: web
+    name: shopdoctor
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.10
+      - key: GEMINI_API_KEY
+        sync: false            # paste your key in Render when it asks; never commit it
+      - key: AI_REQUESTS_PER_HOUR
+        value: "30"            # per visitor
+      - key: AI_REQUESTS_PER_DAY
+        value: "600"           # for the whole site

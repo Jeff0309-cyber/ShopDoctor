@@ -33,6 +33,10 @@ GEMINI_MODELS = [m.strip() for m in os.getenv("GEMINI_MODELS", "gemini-flash-lat
 # sample data so the iOS app can be developed without API keys.
 DEMO_MODE = os.getenv("SHOPDOCTOR_DEMO", "0") == "1"
 
+# Public deployments: AI-backed requests allowed per visitor per hour, and in total per day.
+AI_REQUESTS_PER_HOUR = int(os.getenv("AI_REQUESTS_PER_HOUR", "30"))
+AI_REQUESTS_PER_DAY = int(os.getenv("AI_REQUESTS_PER_DAY", "600"))
+
 DATA_DIR = Path(os.getenv("SHOPDOCTOR_DATA_DIR", Path(__file__).resolve().parent.parent / "data"))
 
 # Twin discovery

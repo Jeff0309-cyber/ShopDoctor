@@ -6,16 +6,26 @@ import uuid
 from typing import List, Optional
 
 import anthropic
+from pathlib import Path
+
 from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 from starlette.datastructures import UploadFile as StarletteUpload  # what request.form() yields
 
-from . import config, demo, doctor_agent, experience, i18n, intake, pipeline, store
+from . import config, demo, doctor_agent, experience, i18n, intake, pipeline, ratelimit, store
 from .schemas import ChatRequest, Diagnosis, ExperienceAudit, RoomSummary, ShopInput, ShopProfile
 
 logging.basicConfig(level=logging.INFO)
 app = FastAPI(title="ShopDoctor API", version="0.1.0")
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+
+
+@app.middleware("http")
+async def limit_ai_usage(request: Request, call_next):
+    blocked = ratelimit.check(request)
+    return blocked if blocked is not None else await call_next(request)
 
 _ALLOWED = {"image/jpeg", "image/png", "image/webp", "image/gif", "application/pdf"}
 _MAX_BYTES = 8 * 1024 * 1024
@@ -183,3 +193,8 @@ async def demo_room() -> RoomSummary:
     if not config.DEMO_MODE:
         raise HTTPException(404, "Demo mode only")
     return demo.sample_room()
+
+
+# The web app (same origin as the API). Mounted last so the API routes above take precedence.
+if WEB_DIR.exists():
+    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
