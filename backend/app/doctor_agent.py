@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from typing import Any, AsyncIterator, Dict, List
+from typing import Any, AsyncIterator, Dict, List, Optional
 
 from . import config, i18n, llm, scoring, store
 from .prescribe import diagnosis_brief, experience_brief
@@ -132,13 +132,19 @@ async def chat(shop: ShopProfile, d: Diagnosis, history: List[ChatMessage], lang
             yield chunk
         return
 
+    system = SYSTEM + "\n\nApp language: " + ("Traditional Chinese (zh-HK)." if lang == i18n.ZH else "English.")
+    if config.AI_PROVIDER == "gemini":
+        async for chunk in _chat_gemini(shop, d, history, system):
+            yield chunk
+        return
+
     messages: List[Dict[str, Any]] = [{"role": m.role, "content": m.content} for m in history]
     try:
         for _ in range(8):
             async with llm.client().beta.messages.stream(
                 model=config.MODEL,
                 max_tokens=64000,
-                system=SYSTEM + "\n\nApp language: " + ("Traditional Chinese (zh-HK)." if lang == i18n.ZH else "English."),
+                system=system,
                 tools=TOOLS,
                 messages=messages,
                 output_config={"effort": "medium"},
@@ -173,6 +179,23 @@ async def chat(shop: ShopProfile, d: Diagnosis, history: List[ChatMessage], lang
         yield _sse({"type": "error", "message": "The Doctor's reply was garbled. Please ask again."})
     except Exception as e:  # surface API/network failures to the app instead of a dropped stream
         yield _sse({"type": "error", "message": f"The Doctor is unavailable: {type(e).__name__}"})
+    yield _sse({"type": "done"})
+
+
+async def _chat_gemini(shop: ShopProfile, d: Diagnosis, history: List[ChatMessage], system: str) -> AsyncIterator[str]:
+    from . import gemini
+
+    def tool(name: str, args: Dict[str, Any]) -> Optional[str]:
+        return run_tool(name, args, shop, d) if _valid(name, args) else None
+
+    try:
+        async for event in gemini.chat_stream(
+            system=system, history=[{"role": m.role, "content": m.content} for m in history],
+            tools=[{k: t[k] for k in ("name", "description", "input_schema")} for t in TOOLS], run_tool=tool,
+        ):
+            yield _sse(event)
+    except gemini.GeminiError:
+        yield _sse({"type": "error", "message": "The Doctor is unavailable right now. Please try again in a minute."})
     yield _sse({"type": "done"})
 
 

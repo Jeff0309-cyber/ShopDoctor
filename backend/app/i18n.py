@@ -80,6 +80,8 @@ _T = {
 
     # ---- diagnosis notes ----
     "note.demo": ("Demo mode: twin shops are fictional sample data.", "示範模式：同類店舖為虛構示例數據。"),
+    "note.no_maps_key": ("No Google Maps key yet, so the twin shops are fictional sample data. Treat the comparison as a demo.",
+                         "尚未設定Google地圖金鑰，同類店舖為虛構示例數據，比較結果只供示範。"),
     "note.places_failed": ("Couldn't reach Google Places; twin comparison is unavailable.",
                            "未能連接Google地點服務，暫時無法比較同類店舖。"),
     "note.web_failed": ("Web search for closed shops failed; the closed group may be undercounted.",

@@ -55,6 +55,9 @@ async def find_closed_shops(shop: ShopProfile, known: List[TwinShop], lang: str 
         "Then call report_closed_shops once with what you found. "
         + ("Write each closed_note in Traditional Chinese (書面語)." if lang == i18n.ZH else "Write each closed_note in English.")
     )
+    if config.AI_PROVIDER == "gemini":
+        return await _find_with_gemini(prompt, shop)
+
     messages: List[Dict[str, Any]] = [{"role": "user", "content": prompt}]
     tools = [
         {"type": "web_search_20260209", "name": "web_search", "max_uses": 8,
@@ -80,6 +83,20 @@ async def find_closed_shops(shop: ShopProfile, known: List[TwinShop], lang: str 
         if response.stop_reason != "pause_turn":
             messages.append({"role": "user", "content": "Call report_closed_shops now with what you found."})
     return []
+
+
+async def _find_with_gemini(prompt: str, shop: ShopProfile) -> List[TwinShop]:
+    from . import gemini
+    try:
+        data = await gemini.grounded_then_structured(
+            prompt=prompt.replace("Then call report_closed_shops once with what you found.", ""),
+            schema=_REPORT_TOOL["input_schema"],
+            extract_instruction=("Extract the permanently closed shops described in these search notes. Keep only shops "
+                                 "whose closure is supported by a listed source; use null for unknown fields."),
+        )
+    except gemini.GeminiError as e:
+        raise llm.LLMError(str(e)) from e
+    return [_to_twin(s, shop) for s in data.get("shops", []) if isinstance(s, dict) and s.get("name")]
 
 
 def _to_twin(s: Dict[str, Any], shop: ShopProfile) -> TwinShop:

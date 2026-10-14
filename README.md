@@ -40,9 +40,9 @@ python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
 # Demo mode: fictional sample data, no API keys needed
 SHOPDOCTOR_DEMO=1 .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Real mode
-export ANTHROPIC_API_KEY=...        # or `ant auth login`
-export GOOGLE_MAPS_API_KEY=...      # with "Places API (New)" enabled
+# Real mode: put your keys in backend/.env (see .env.example; git-ignored)
+#   GEMINI_API_KEY=...       → Gemini does the AI work (or ANTHROPIC_API_KEY for Claude)
+#   GOOGLE_MAPS_API_KEY=...  → real twin shops (without it, twins are labelled sample data)
 .venv/bin/uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 .venv/bin/python -m pytest -q      # tests run offline

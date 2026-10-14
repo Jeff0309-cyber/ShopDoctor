@@ -1,4 +1,4 @@
-"""Thin wrapper around the Anthropic SDK shared by intake, enrichment and the Doctor."""
+"""Thin wrapper around the AI provider (Claude by default, or Gemini) shared by intake, enrichment and the Doctor."""
 
 import json
 from typing import Any, Dict, List, Optional
@@ -42,6 +42,13 @@ async def structured(
     effort: str = "medium",
 ) -> Dict[str, Any]:
     """One request whose reply is JSON validated against `schema`."""
+    if config.AI_PROVIDER == "gemini":
+        from . import gemini
+        try:
+            return await gemini.structured(system=system, content=content, schema=schema)
+        except gemini.GeminiError as e:
+            raise LLMError(str(e)) from e
+
     response = await client().beta.messages.create(
         model=config.MODEL,
         max_tokens=16000,

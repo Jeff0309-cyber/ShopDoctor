@@ -30,6 +30,10 @@ async def diagnose(shop: ShopProfile, lang: str = i18n.EN) -> Diagnosis:
         twin_list = demo.sample_twins(shop, lang=lang)
         own_mtr = 520.0
         notes.append(i18n.t(lang, "note.demo"))
+    elif not config.GOOGLE_MAPS_API_KEY:
+        # Real AI, but no way to look up real neighbours yet: label the sample twins clearly.
+        twin_list = demo.sample_twins(shop, lang=lang)
+        notes.append(i18n.t(lang, "note.no_maps_key"))
     else:
         try:
             search = await twins.find_twins(shop)
@@ -40,7 +44,7 @@ async def diagnose(shop: ShopProfile, lang: str = i18n.EN) -> Diagnosis:
             notes.append(i18n.t(lang, "note.places_failed"))
         try:
             twin_list += await enrich.find_closed_shops(shop, twin_list, lang=lang)
-        except anthropic.APIError as e:
+        except (anthropic.APIError, prescribe.llm.LLMError) as e:
             log.warning("Closed-shop web search failed: %s", e)
             notes.append(i18n.t(lang, "note.web_failed"))
         if own_listing is None:
