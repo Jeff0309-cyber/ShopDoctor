@@ -1,4 +1,4 @@
-# ShopDoctor
+# ShopDoctor 
 
 An AI business consultant for Hong Kong small businesses. The owner uploads menu, shopfront and revenue/cost information and drops a pin on their location. ShopDoctor then:
 
